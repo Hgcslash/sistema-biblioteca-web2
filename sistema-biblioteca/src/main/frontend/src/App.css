@@ -1,0 +1,157 @@
+#root {
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f1f5f2;
+  color: #24352a;
+}
+
+.container {
+  width: min(1200px, 94%);
+  margin: 0 auto;
+  padding: 32px 0;
+}
+
+.cabecalho {
+  background: #245c3b;
+  color: white;
+  padding: 28px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.cabecalho h1 {
+  margin: 0 0 8px;
+}
+
+.cabecalho p {
+  margin: 0;
+  color: #e1eee5;
+}
+
+.painel {
+  background: white;
+  padding: 24px;
+  margin-bottom: 24px;
+  border-radius: 12px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+}
+
+.painel h2 {
+  margin-top: 0;
+  color: #245c3b;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-weight: 600;
+}
+
+input {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid #ccd7cf;
+  border-radius: 6px;
+  font: inherit;
+}
+
+input:focus {
+  outline: 2px solid #80b994;
+  border-color: #245c3b;
+}
+
+.linha {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+
+.botoes,
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+button {
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  background: #245c3b;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(1.1);
+}
+
+button.secundario {
+  background: #68766d;
+}
+
+button.perigo {
+  background: #b83232;
+}
+
+.mensagem {
+  margin-bottom: 0;
+  font-weight: 600;
+}
+
+.tabela-container {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+th,
+td {
+  padding: 12px;
+  border-bottom: 1px solid #e0e7e2;
+}
+
+th {
+  background: #eaf2ec;
+  color: #245c3b;
+}
+
+tbody tr:hover {
+  background: #f7faf8;
+}
+
+@media (max-width: 600px) {
+  .container {
+    width: 96%;
+    padding-top: 16px;
+  }
+
+  .cabecalho,
+  .painel {
+    padding: 18px;
+  }
+
+  .linha {
+    grid-template-columns: 1fr;
+  }
+}
