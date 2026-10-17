@@ -32,9 +32,10 @@ build/
 ### VS Code ###
 .vscode/
 
-database.db*
-
-node_modules/
-*/node_modules/
+# Banco de dados H2
 database.db
+database.db.*
 
+# Dependências do frontend
+node_modules/
+**/node_modules/
