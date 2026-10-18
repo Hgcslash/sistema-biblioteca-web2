@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from './services/api';
+import type { Usuario } from './types/Usuario';
 import './App.css';
 
 interface Livro {
@@ -22,8 +23,11 @@ const livroVazio: Livro = {
 function App() {
   const [livros, setLivros] = useState<Livro[]>([]);
   const [livro, setLivro] = useState<Livro>(livroVazio);
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [mensagem, setMensagem] = useState('');
   const [carregando, setCarregando] = useState(false);
+  const [carregandoUsuarios, setCarregandoUsuarios] = useState(false);
+  const [erroUsuarios, setErroUsuarios] = useState('');
 
   async function carregarLivros() {
     try {
@@ -37,14 +41,25 @@ function App() {
     }
   }
 
+  async function carregarUsuarios() {
+    try {
+      setCarregandoUsuarios(true);
+      setErroUsuarios('');
+      const resposta = await api.get<Usuario[]>('/usuarios');
+      setUsuarios(resposta.data);
+    } catch {
+      setErroUsuarios('Não foi possível carregar os usuários. Verifique o backend.');
+    } finally {
+      setCarregandoUsuarios(false);
+    }
+  }
+
   useEffect(() => {
     carregarLivros();
+    carregarUsuarios();
   }, []);
 
-  function atualizarCampo(
-    campo: keyof Livro,
-    valor: string,
-  ) {
+  function atualizarCampo(campo: keyof Livro, valor: string) {
     setLivro((atual) => ({
       ...atual,
       [campo]:
@@ -145,9 +160,7 @@ function App() {
                 type="number"
                 min="1"
                 value={livro.anoPublicacao}
-                onChange={(e) =>
-                  atualizarCampo('anoPublicacao', e.target.value)
-                }
+                onChange={(e) => atualizarCampo('anoPublicacao', e.target.value)}
               />
             </label>
 
@@ -158,9 +171,7 @@ function App() {
                 type="number"
                 min="0"
                 value={livro.quantidade}
-                onChange={(e) =>
-                  atualizarCampo('quantidade', e.target.value)
-                }
+                onChange={(e) => atualizarCampo('quantidade', e.target.value)}
               />
             </label>
           </div>
@@ -211,9 +222,7 @@ function App() {
                     <td>{item.quantidade}</td>
                     <td>
                       <div className="acoes">
-                        <button onClick={() => editarLivro(item)}>
-                          Editar
-                        </button>
+                        <button onClick={() => editarLivro(item)}>Editar</button>
                         <button
                           className="perigo"
                           onClick={() => excluirLivro(item.id)}
@@ -228,6 +237,45 @@ function App() {
             </table>
           </div>
         )}
+      </section>
+
+      <section className="painel">
+        <h2>Usuários cadastrados</h2>
+
+        {carregandoUsuarios ? (
+          <p>Carregando usuários...</p>
+        ) : erroUsuarios ? (
+          <p className="mensagem">{erroUsuarios}</p>
+        ) : usuarios.length === 0 ? (
+          <p>Nenhum usuário cadastrado.</p>
+        ) : (
+          <div className="tabela-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nome</th>
+                  <th>Nome de usuário</th>
+                  <th>E-mail</th>
+                </tr>
+              </thead>
+              <tbody>
+                {usuarios.map((usuario) => (
+                  <tr key={usuario.id}>
+                    <td>{usuario.id}</td>
+                    <td>{usuario.nome}</td>
+                    <td>{usuario.username}</td>
+                    <td>{usuario.email}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <button type="button" className="secundario" onClick={carregarUsuarios}>
+          Atualizar lista de usuários
+        </button>
       </section>
     </main>
   );
