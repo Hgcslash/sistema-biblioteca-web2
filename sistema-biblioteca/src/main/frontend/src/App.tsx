@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import api from './services/api';
 import type { Usuario } from './types/Usuario';
 import './App.css';
+import type { NovoUsuario } from './types/NovoUsuario';
+import { usuarioVazio } from './types/NovoUsuario';
 
 interface Livro {
   id?: number;
@@ -24,6 +26,12 @@ function App() {
   const [livros, setLivros] = useState<Livro[]>([]);
   const [livro, setLivro] = useState<Livro>(livroVazio);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [novoUsuario, setNovoUsuario] = useState<NovoUsuario>({
+  ...usuarioVazio,
+});
+
+const [mensagemUsuario, setMensagemUsuario] = useState('');
+const [salvandoUsuario, setSalvandoUsuario] = useState(false);
   const [mensagem, setMensagem] = useState('');
   const [carregando, setCarregando] = useState(false);
   const [carregandoUsuarios, setCarregandoUsuarios] = useState(false);
@@ -53,7 +61,39 @@ function App() {
       setCarregandoUsuarios(false);
     }
   }
+function atualizarCampoUsuario(
+    campo: keyof NovoUsuario,
+    valor: string
+  ) {
+    setNovoUsuario((atual) => ({
+      ...atual,
+      [campo]: valor,
+    }));
+  }
 
+  async function salvarUsuario(
+    evento: React.FormEvent<HTMLFormElement>
+  ) {
+    evento.preventDefault();
+
+    try {
+      setSalvandoUsuario(true);
+      setMensagemUsuario('');
+
+      await api.post('/usuarios', novoUsuario);
+
+      setMensagemUsuario('Usuário cadastrado com sucesso!');
+      setNovoUsuario({ ...usuarioVazio });
+
+      await carregarUsuarios();
+    } catch {
+      setMensagemUsuario(
+        'Erro ao cadastrar usuário. Verifique os dados e a API.'
+      );
+    } finally {
+      setSalvandoUsuario(false);
+    }
+  }
   useEffect(() => {
     carregarLivros();
     carregarUsuarios();
@@ -117,7 +157,72 @@ function App() {
         <h1>📚 Sistema de Biblioteca</h1>
         <p>Cadastro e gerenciamento do acervo</p>
       </header>
+<section className="painel">
+        <h2>Cadastrar usuário</h2>
 
+        <form onSubmit={salvarUsuario}>
+          <label>
+            Nome completo
+            <input
+              required
+              value={novoUsuario.nome}
+              onChange={(e) =>
+                atualizarCampoUsuario('nome', e.target.value)
+              }
+              placeholder="Digite o nome completo"
+            />
+          </label>
+
+          <label>
+            Nome de usuário
+            <input
+              required
+              value={novoUsuario.username}
+              onChange={(e) =>
+                atualizarCampoUsuario('username', e.target.value)
+              }
+              placeholder="Digite o nome de usuário"
+            />
+          </label>
+
+          <label>
+            Senha
+            <input
+              required
+              type="password"
+              minLength={6}
+              value={novoUsuario.senha}
+              onChange={(e) =>
+                atualizarCampoUsuario('senha', e.target.value)
+              }
+              placeholder="Mínimo de 6 caracteres"
+            />
+          </label>
+
+          <label>
+            E-mail
+            <input
+              required
+              type="email"
+              value={novoUsuario.email}
+              onChange={(e) =>
+                atualizarCampoUsuario('email', e.target.value)
+              }
+              placeholder="Digite o e-mail"
+            />
+          </label>
+
+          <div className="botoes">
+            <button type="submit" disabled={salvandoUsuario}>
+              {salvandoUsuario ? 'Salvando...' : 'Cadastrar usuário'}
+            </button>
+          </div>
+        </form>
+
+        {mensagemUsuario && (
+          <p className="mensagem">{mensagemUsuario}</p>
+        )}
+      </section>
       <section className="painel">
         <h2>{livro.id ? 'Editar livro' : 'Cadastrar livro'}</h2>
 
