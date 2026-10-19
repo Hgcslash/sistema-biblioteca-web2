@@ -36,6 +36,7 @@ const [salvandoUsuario, setSalvandoUsuario] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const [carregandoUsuarios, setCarregandoUsuarios] = useState(false);
   const [erroUsuarios, setErroUsuarios] = useState('');
+const [editandoUsuarioId, setEditandoUsuarioId] = useState<number | null>(null);
 
   async function carregarLivros() {
     try {
@@ -72,28 +73,90 @@ function atualizarCampoUsuario(
   }
 
   async function salvarUsuario(
-    evento: React.FormEvent<HTMLFormElement>
-  ) {
-    evento.preventDefault();
+  evento: React.FormEvent<HTMLFormElement>
+) {
+  evento.preventDefault();
 
-    try {
-      setSalvandoUsuario(true);
-      setMensagemUsuario('');
+  try {
+    setSalvandoUsuario(true);
+    setMensagemUsuario('');
 
+    if (editandoUsuarioId !== null) {
+      await api.put(`/usuarios/${editandoUsuarioId}`, novoUsuario);
+      setMensagemUsuario('Usuário atualizado com sucesso!');
+      setEditandoUsuarioId(null);
+    } else {
       await api.post('/usuarios', novoUsuario);
-
       setMensagemUsuario('Usuário cadastrado com sucesso!');
-      setNovoUsuario({ ...usuarioVazio });
-
-      await carregarUsuarios();
-    } catch {
-      setMensagemUsuario(
-        'Erro ao cadastrar usuário. Verifique os dados e a API.'
-      );
-    } finally {
-      setSalvandoUsuario(false);
     }
+
+    setNovoUsuario({ ...usuarioVazio });
+
+    await carregarUsuarios();
+  } catch {
+    setMensagemUsuario(
+      editandoUsuarioId !== null
+        ? 'Erro ao atualizar usuário. Verifique os dados e a API.'
+        : 'Erro ao cadastrar usuário. Verifique os dados e a API.'
+    );
+  } finally {
+    setSalvandoUsuario(false);
   }
+}
+
+function editarUsuario(usuario: Usuario) {
+  
+  setEditandoUsuarioId(usuario.id ?? null);
+
+  setNovoUsuario({
+    nome: usuario.nome,
+    username: usuario.username,
+    senha: '',
+    email: usuario.email,
+  });
+
+  setMensagemUsuario('');
+}
+
+function cancelarEdicaoUsuario() {
+  setEditandoUsuarioId(null);
+  setNovoUsuario({ ...usuarioVazio });
+  setMensagemUsuario('');
+}
+
+async function excluirUsuario(id?: number) {
+  if (id === undefined) {
+    setMensagemUsuario('Não foi possível identificar o usuário.');
+    return;
+  }
+
+  const confirmou = window.confirm(
+    'Tem certeza de que deseja excluir este usuário?'
+  );
+
+  if (!confirmou) {
+    return;
+  }
+
+  try {
+    setMensagemUsuario('');
+
+    await api.delete(`/usuarios/${id}`);
+
+    if (editandoUsuarioId === id) {
+      setEditandoUsuarioId(null);
+      setNovoUsuario({ ...usuarioVazio });
+    }
+
+    setMensagemUsuario('Usuário excluído com sucesso!');
+
+    await carregarUsuarios();
+  } catch {
+    setMensagemUsuario(
+      'Erro ao excluir usuário. Verifique a API e tente novamente.'
+    );
+  }
+}
   useEffect(() => {
     carregarLivros();
     carregarUsuarios();
@@ -158,7 +221,11 @@ function atualizarCampoUsuario(
         <p>Cadastro e gerenciamento do acervo</p>
       </header>
 <section className="painel">
-        <h2>Cadastrar usuário</h2>
+        <h2>
+  {editandoUsuarioId !== null
+    ? 'Editar usuário'
+    : 'Cadastrar usuário'}
+</h2>
 
         <form onSubmit={salvarUsuario}>
           <label>
@@ -186,18 +253,20 @@ function atualizarCampoUsuario(
           </label>
 
           <label>
-            Senha
-            <input
-              required
-              type="password"
-              minLength={6}
-              value={novoUsuario.senha}
-              onChange={(e) =>
-                atualizarCampoUsuario('senha', e.target.value)
-              }
-              placeholder="Mínimo de 6 caracteres"
-            />
-          </label>
+  Senha
+  <input
+    required={editandoUsuarioId === null}
+    type="password"
+    minLength={6}
+    value={novoUsuario.senha}
+    onChange={(e) => atualizarCampoUsuario('senha', e.target.value)}
+    placeholder={
+      editandoUsuarioId !== null
+        ? 'Deixe vazio para manter a senha atual'
+        : 'Mínimo de 6 caracteres'
+    }
+  />
+</label>
 
           <label>
             E-mail
@@ -214,8 +283,21 @@ function atualizarCampoUsuario(
 
           <div className="botoes">
             <button type="submit" disabled={salvandoUsuario}>
-              {salvandoUsuario ? 'Salvando...' : 'Cadastrar usuário'}
+              {salvandoUsuario
+  ? 'Salvando...'
+  : editandoUsuarioId !== null
+    ? 'Atualizar usuário'
+    : 'Cadastrar usuário'}
             </button>
+            {editandoUsuarioId !== null && (
+  <button
+    type="button"
+    className="secundario"
+    onClick={cancelarEdicaoUsuario}
+  >
+    Cancelar edição
+  </button>
+)}
           </div>
         </form>
 
@@ -345,43 +427,67 @@ function atualizarCampoUsuario(
       </section>
 
       <section className="painel">
-        <h2>Usuários cadastrados</h2>
+  <h2>Usuários cadastrados</h2>
 
-        {carregandoUsuarios ? (
-          <p>Carregando usuários...</p>
-        ) : erroUsuarios ? (
-          <p className="mensagem">{erroUsuarios}</p>
-        ) : usuarios.length === 0 ? (
-          <p>Nenhum usuário cadastrado.</p>
-        ) : (
-          <div className="tabela-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Nome</th>
-                  <th>Nome de usuário</th>
-                  <th>E-mail</th>
-                </tr>
-              </thead>
-              <tbody>
-                {usuarios.map((usuario) => (
-                  <tr key={usuario.id}>
-                    <td>{usuario.id}</td>
-                    <td>{usuario.nome}</td>
-                    <td>{usuario.username}</td>
-                    <td>{usuario.email}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+  {carregandoUsuarios ? (
+    <p>Carregando usuários...</p>
+  ) : erroUsuarios ? (
+    <p className="mensagem">{erroUsuarios}</p>
+  ) : usuarios.length === 0 ? (
+    <p>Nenhum usuário cadastrado.</p>
+  ) : (
+    <div className="tabela-container">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Nome de usuário</th>
+            <th>E-mail</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {usuarios.map((usuario) => (
+            <tr key={usuario.id}>
+              <td>{usuario.id}</td>
+              <td>{usuario.nome}</td>
+              <td>{usuario.username}</td>
+              <td>{usuario.email}</td>
+              <td>
+                <div className="botoes">
+                  <button
+                    type="button"
+                    className="secundario"
+                    onClick={() => editarUsuario(usuario)}
+                  >
+                    Editar
+                  </button>
 
-        <button type="button" className="secundario" onClick={carregarUsuarios}>
-          Atualizar lista de usuários
-        </button>
-      </section>
+                  <button
+                    type="button"
+                    className="perigo"
+                    onClick={() => excluirUsuario(usuario.id)}
+                  >
+                    Excluir
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+
+  <button
+    type="button"
+    className="secundario"
+    onClick={carregarUsuarios}
+  >
+    Atualizar lista de usuários
+  </button>
+</section>
     </main>
   );
 }
