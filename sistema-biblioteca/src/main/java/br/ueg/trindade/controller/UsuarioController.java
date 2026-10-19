@@ -14,26 +14,26 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import br.ueg.trindade.model.Usuario;
-import br.ueg.trindade.repository.UsuarioRepository;
+import br.ueg.trindade.service.UsuarioService;
 
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioController {
 
-    private final UsuarioRepository usuarioRepository;
+    private final UsuarioService usuarioService;
 
-    public UsuarioController(UsuarioRepository usuarioRepository) {
-        this.usuarioRepository = usuarioRepository;
+    public UsuarioController(UsuarioService usuarioService) {
+        this.usuarioService = usuarioService;
     }
 
     @GetMapping
     public List<Usuario> listar() {
-        return usuarioRepository.findAll();
+        return usuarioService.listarTodos();
     }
 
     @PostMapping
     public Usuario cadastrar(@RequestBody Usuario usuario) {
-        return usuarioRepository.save(usuario);
+        return usuarioService.salvar(usuario);
     }
 
     @PutMapping("/{id}")
@@ -41,7 +41,7 @@ public class UsuarioController {
             @PathVariable Long id,
             @RequestBody Usuario dadosUsuario) {
 
-        Usuario usuario = usuarioRepository.findById(id)
+        Usuario usuario = usuarioService.buscarPorId(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Usuário não encontrado"));
@@ -55,17 +55,17 @@ public class UsuarioController {
             usuario.setSenha(dadosUsuario.getSenha());
         }
 
-        return usuarioRepository.save(usuario);
+        return usuarioService.salvar(usuario);
     }
 
     @DeleteMapping("/{id}")
     public void excluir(@PathVariable Long id) {
-        if (!usuarioRepository.existsById(id)) {
+        if (!usuarioService.existePorId(id)) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND,
                     "Usuário não encontrado");
         }
 
-        usuarioRepository.deleteById(id);
+        usuarioService.excluir(id);
     }
 }
